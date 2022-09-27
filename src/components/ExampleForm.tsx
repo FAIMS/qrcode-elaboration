@@ -27,7 +27,10 @@ import './ExampleForm.css'
 
 const ExampleForm = () => {
 
-  const [codeList, setCodeList] = useState<any>([])
+  const [codeList, setCodeList] = useState<any>([
+    "sample data",
+    "https://example.org/"
+  ])
 
   return (
     <Formik

@@ -19,19 +19,25 @@
  */
 
 // @ts-ignore
-import React from 'react'
+import React, { useState } from 'react'
 import { Field, Form, Formik } from 'formik'
 import { QRCodeFormField } from './QRCodeFormField'
 import Button from '@mui/material/Button'
 import './ExampleForm.css'
 
 const ExampleForm = () => {
+
+  const [codeList, setCodeList] = useState<any>([])
+
   return (
     <Formik
       initialValues={{ sample: '' }}
       onSubmit={(values: any, actions: any) => {
         console.log(values)
         actions.setSubmitting(false)
+        if (values.sample) {
+          setCodeList([...codeList, values.sample])
+        }
       }}
     >
       {(formProps) => (
@@ -41,7 +47,7 @@ const ExampleForm = () => {
             <Form>
               <p>Sample form field</p>
               <Field
-                label='This label was set explicitly'
+                label='Get a QR Code'
                 name='sample'
                 component={QRCodeFormField}
               />
@@ -51,9 +57,13 @@ const ExampleForm = () => {
               </Button>
             </Form>
           </div>
-          <div id='formvaluedisplay'>
-            <pre>{JSON.stringify(formProps.values, null, 2)}</pre>
-          </div>
+
+          <ul id="codelist">
+            {codeList.map((c:any, i:number) => {
+              return <li key={i}>{c}</li>
+            })}
+          </ul>
+
         </div>
       )}
     </Formik>

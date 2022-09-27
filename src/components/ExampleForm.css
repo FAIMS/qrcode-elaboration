@@ -21,19 +21,21 @@
  #demoformcontainer {
     display: flex; 
     justify-content: space-around;
-    background-color: pink;
-    width: 90%;
+    width: 100%;
     margin: auto;
+    flex-wrap: wrap;
 }
 
 
 #theform {
-    background-color: white;
-    flex-grow: 2;
+    background-color: white; 
+    min-width: 390px;
 }
 
-#formvaluedisplay {
+#codelist {
     background-color:  black;
-    color: white;
-    flex-grow: 1;
+    color: white; 
+    width: 100%;
+}
+#codelist ul {
 }

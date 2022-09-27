@@ -22,7 +22,7 @@ import React, { useState } from 'react'
 import styles from './QRCodeFormField.module.css'
 import Button from '@mui/material/Button'
 
-import { BarcodeScanner } from '@capacitor-community/barcode-scanner'
+import { BarcodeScanner, ScanResult } from '@capacitor-community/barcode-scanner'
 
 import { FieldProps } from 'formik'
 import ReactDOM from 'react-dom'
@@ -44,6 +44,7 @@ export function QRCodeFormField({
   }
   const [state, setState] = useState(initialValue)
   const [scanning, setScanning] = useState(false)
+  const [canScan, setCanScan] = useState(true)
 
   const pluginCallback = (value: any) => {
     setState(value)
@@ -51,45 +52,69 @@ export function QRCodeFormField({
   }
 
   const startScan = async () => {
-    console.log('Starting scan right now...')
 
-    setScanning(true)
     const formcontainer = document.getElementById('demoformcontainer')
-    if (formcontainer) {
-      formcontainer.classList.add('hidden')
-    }
 
     console.log('Checking for permissions')
+    let permissions
+    let faked = false
     // check that we have camera permission
-    const permissions = await BarcodeScanner.checkPermission({ force: true })
-    console.log('Permissions result', JSON.stringify(permissions))
+    try {
+      permissions = await BarcodeScanner.checkPermission({ force: true })
+      console.log('Permissions result', JSON.stringify(permissions))
+    } catch {
+      console.log('Cannot Scan')
+      // pluginCallback("fake value")
+      setCanScan(false)
+      permissions = {granted: true}
+      faked = true
+    }
+
 
     if (permissions.granted) {
-      // make background of WebView transparent
-      BarcodeScanner.hideBackground()
+      console.log("have permission", faked)
+      // hide the form so we can overlay the viewfinder
+      if (formcontainer) {
+        formcontainer.classList.add('hidden')
+      }
+      
+      if (!faked) {
+        // make background of WebView transparent
+        BarcodeScanner.hideBackground()
+      }
       // and everything else too
       document.getElementsByTagName('body')[0].classList.add('transparent')
 
-      const result = await BarcodeScanner.startScan({})
+      setScanning(true)
+
+      let result: ScanResult = {hasContent: true, content: "fake value" + Math.floor(Math.random() * 100)}
+      if (!faked) {
+          result = await BarcodeScanner.startScan({})
+                                .then((r) => {
+                                  stopScan()
+                                  return r
+                                })
+      }
 
       // if the result has content
       if (result.hasContent) {
         console.log('Barcode content:', result.content) // log the raw scanned content
         pluginCallback(result.content)
       }
+
     } else {
       console.log('No permission for QR')
     }
-    stopScan()
   }
 
   const stopScan = () => {
-    BarcodeScanner.showBackground()
+    BarcodeScanner.showBackground().catch(e => console.log('showBackground'))
+
     const formcontainer = document.getElementById('demoformcontainer')
     if (formcontainer) {
       formcontainer.classList.remove('hidden')
     }
-    BarcodeScanner.stopScan()
+    BarcodeScanner.stopScan().catch(e => console.log('stopScan'))
     setScanning(false)
   }
 
@@ -97,39 +122,49 @@ export function QRCodeFormField({
   // to display below the form field
   const valueText = JSON.stringify(state)
 
-  console.log("Render...", scanning)
-
   if (scanning) {
     const target = document.getElementById('qrscanner')
     if (target) {
-    return ReactDOM.createPortal(
-    (
-          <div className={styles.container}>
-            <div className={styles.barcodeContainer}>
-              <div className={styles.relative}>
-                <p>Aim your camera at a barcode</p>
-                <Button variant='outlined'  onClick={stopScan}>Stop Scan</Button>
-              </div>
-              <div className={styles.square}>
-                <div className={styles.outer}>
-                  <div className={styles.inner}></div>
+      console.log('rendering portal')
+      return ReactDOM.createPortal(
+        (
+              <div className={styles.container}>
+                <div className={styles.barcodeContainer}>
+                  <div className={styles.relative}>
+                    <p>Aim your camera at a barcode</p>
+                    <Button variant='outlined'  onClick={stopScan}>Stop Scan</Button>
+                  </div>
+                  <div className={styles.square}>
+                    <div className={styles.outer}>
+                      <div className={styles.inner}></div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-    ), 
+        ), 
      target )
     } else {
       // how did we get here? 
       return (<div>Something went wrong</div>)
     }
   } else {
-    return (
-      <div>
-        <p>{props.label}</p>
-        <Button variant='outlined' onClick={startScan}>Scan QR Code</Button>
-        <div>{valueText}</div>
-      </div>
-    )
+    if (!canScan) {
+      return (
+        <div>
+          <p>{props.label}</p>
+          <Button variant='outlined' onClick={startScan}>Scan QR Code</Button>
+          <div>Scanning not supported</div>
+          <div>{valueText}</div>
+        </div>
+      )
+    } else {
+      return (
+        <div>
+          <p>{props.label}</p>
+          <Button variant='outlined' onClick={startScan}>Scan QR Code</Button>
+          <div>{valueText}</div>
+        </div>
+      )
+    }
   }
 }

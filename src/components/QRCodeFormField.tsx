@@ -112,7 +112,15 @@ export function QRCodeFormField({
   const valueText = JSON.stringify(state)
 
   if (scanning) {
-    const target = document.getElementById('qrscanner')
+    // insert or create an element to hold the overlay
+    let target
+    target = document.getElementById('qrscanner')
+    if (!target) {
+      target = document.createElement('div')
+      target.setAttribute('id', 'qrscanner')    
+      document.body.appendChild(target);
+    }
+
     if (target) {
       return ReactDOM.createPortal(
         (

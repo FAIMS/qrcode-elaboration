@@ -22,6 +22,7 @@
 import React, { useState } from 'react'
 import { Field, Form, Formik } from 'formik'
 import { QRCodeFormField } from './QRCodeFormField'
+import { DisplayQR, DisplayQRModal } from './DisplayQR'
 import Button from '@mui/material/Button'
 import './ExampleForm.css'
 
@@ -63,7 +64,7 @@ const ExampleForm = () => {
 
           <ul id="codelist">
             {codeList.map((c:any, i:number) => {
-              return <li key={i}>{c}</li>
+              return <li key={i}><DisplayQRModal content={c} /></li>
             })}
           </ul>
 
